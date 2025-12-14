@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FitFuel - Fitness & Nutrition Tracker</title>
+  <link rel="stylesheet" href="css/style.css">
+  <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+</head>
+<body>
+  <!-- Login Page (shown when not authenticated) -->
+  <div id="login-page" class="page">
+    <div class="login-container">
+      <div class="login-card">
+        <h1>FitFuel</h1>
+        <h2>Login</h2>
+        <form id="login-form">
+          <div class="form-group">
+            <label for="login-email">Email</label>
+            <input type="email" id="login-email" required>
+          </div>
+          <div class="form-group">
+            <label for="login-password">Password</label>
+            <input type="password" id="login-password" required>
+          </div>
+          <div id="login-error" class="error-message"></div>
+          <button type="submit" class="btn-primary">Login</button>
+          <p class="auth-link">Don't have an account? <a href="#" id="show-register">Register</a></p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Register Page -->
+  <div id="register-page" class="page hidden">
+    <div class="login-container">
+      <div class="login-card">
+        <h1>FitFuel</h1>
+        <h2>Register</h2>
+        <form id="register-form">
+          <div class="form-group">
+            <label for="register-email">Email</label>
+            <input type="email" id="register-email" required>
+          </div>
+          <div class="form-group">
+            <label for="register-password">Password</label>
+            <input type="password" id="register-password" required>
+          </div>
+          <div id="register-error" class="error-message"></div>
+          <button type="submit" class="btn-primary">Register</button>
+          <p class="auth-link">Already have an account? <a href="#" id="show-login">Login</a></p>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main App (shown when authenticated) -->
+  <div id="app" class="hidden">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h1>FitFuel</h1>
+        <button id="theme-toggle" class="theme-toggle" title="Toggle theme">
+          <span id="theme-icon">🌙</span>
+        </button>
+      </div>
+      <nav class="sidebar-nav">
+        <a href="#" data-page="dashboard" class="nav-item active">
+          <span class="nav-icon">📊</span>
+          <span>Dashboard</span>
+        </a>
+        <a href="#" data-page="workouts" class="nav-item">
+          <span class="nav-icon">💪</span>
+          <span>Workouts</span>
+        </a>
+        <a href="#" data-page="meals" class="nav-item">
+          <span class="nav-icon">🍽️</span>
+          <span>Meals</span>
+        </a>
+        <a href="#" data-page="calendar" class="nav-item">
+          <span class="nav-icon">📅</span>
+          <span>Calendar</span>
+        </a>
+        <a href="#" data-page="preferences" class="nav-item">
+          <span class="nav-icon">⚙️</span>
+          <span>Preferences</span>
+        </a>
+        <a href="#" data-page="ai" class="nav-item">
+          <span class="nav-icon">🤖</span>
+          <span>AI Tools</span>
+        </a>
+      </nav>
+      <div class="sidebar-footer">
+        <button id="logout-btn" class="btn-logout">
+          <span class="nav-icon">🚪</span>
+          <span>Logout</span>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="main-content">
+      <!-- Dashboard Page -->
+      <div id="dashboard-page" class="page-content">
+        <div class="page-header">
+          <h2>Dashboard</h2>
+          <p class="page-subtitle">Welcome back, <span id="user-email"></span>!</p>
+        </div>
+        <div class="dashboard-grid">
+          <div class="stat-card">
+            <div class="stat-icon">💪</div>
+            <div class="stat-info">
+              <h3>Last Workout</h3>
+              <p id="last-workout">No workouts yet</p>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon">🍽️</div>
+            <div class="stat-info">
+              <h3>Meals Today</h3>
+              <p id="meals-today">0</p>
+            </div>
+          </div>
+        </div>
+        <div class="quick-actions">
+          <h3>Quick Actions</h3>
+          <div class="action-buttons">
+            <button class="action-btn" data-action="create-workout">
+              <span>➕</span>
+              <span>Create Workout</span>
+            </button>
+            <button class="action-btn" data-action="log-meal">
+              <span>🍽️</span>
+              <span>Log Meal</span>
+            </button>
+            <button class="action-btn" data-action="ai-workout">
+              <span>🤖</span>
+              <span>Generate AI Workout</span>
+            </button>
+            <button class="action-btn" data-action="ai-recipe">
+              <span>🍳</span>
+              <span>Generate AI Recipe</span>
+            </button>
+            <button class="action-btn" data-action="calendar">
+              <span>📅</span>
+              <span>View Calendar</span>
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Workouts Page -->
+      <div id="workouts-page" class="page-content hidden">
+        <div class="page-header">
+          <h2>Workouts</h2>
+          <button id="create-workout-btn" class="btn-primary">➕ Create Workout</button>
+        </div>
+        <div id="workouts-list" class="workouts-list"></div>
+      </div>
+
+      <!-- Meals Page -->
+      <div id="meals-page" class="page-content hidden">
+        <div class="page-header">
+          <h2>Meals</h2>
+          <button id="create-meal-btn" class="btn-primary">➕ Log Meal</button>
+        </div>
+        <div id="meals-list" class="meals-list"></div>
+      </div>
+
+      <!-- Calendar Page -->
+      <div id="calendar-page" class="page-content hidden">
+        <div class="page-header">
+          <h2>Workout Calendar</h2>
+        </div>
+        <div id="calendar-container" class="calendar-container"></div>
+      </div>
+
+      <!-- Preferences Page -->
+      <div id="preferences-page" class="page-content hidden">
+        <div class="page-header">
+          <h2>Preferences</h2>
+        </div>
+        <div id="preferences-content" class="preferences-content"></div>
+      </div>
+
+      <!-- AI Tools Page -->
+      <div id="ai-page" class="page-content hidden">
+        <div class="page-header">
+          <h2>AI Tools</h2>
+        </div>
+        <div id="ai-content" class="ai-content"></div>
+      </div>
+    </main>
+  </div>
+
+  <!-- Modals -->
+  <div id="modal-overlay" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modal-title"></h3>
+        <button class="modal-close">&times;</button>
+      </div>
+      <div class="modal-body" id="modal-body"></div>
+    </div>
+  </div>
+
+  <!-- Scripts -->
+  <script type="module" src="js/api.js"></script>
+  <script type="module" src="js/users.js"></script>
+  <script type="module" src="js/workouts.js"></script>
+  <script type="module" src="js/exercises.js"></script>
+  <script type="module" src="js/meals.js"></script>
+  <script type="module" src="js/preferences.js"></script>
+  <script type="module" src="js/ai.js"></script>
+  <script type="module" src="js/calendar.js"></script>
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
