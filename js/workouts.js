@@ -16,9 +16,13 @@ export async function loadWorkoutsPage() {
 async function loadExercisesList() {
   try {
     exercises = await api.getExercises();
+    
+    if (!exercises || exercises.length === 0) {
+    }
   } catch (error) {
     console.error('Error loading exercises:', error);
     exercises = [];
+    alert('Failed to load exercises. Please refresh the page or check your backend connection.');
   }
 }
 
@@ -30,29 +34,41 @@ async function renderWorkouts() {
     const allWorkouts = await api.getWorkouts();
     const userWorkouts = allWorkouts.filter(w => w.user_id === user.user_id);
     
-    // Group workouts by date
-    const workoutsByDate = {};
+    // Group workout exercises by date
+    const exercisesByDate = {};
     userWorkouts.forEach(workout => {
       const date = new Date(workout.date).toDateString();
-      if (!workoutsByDate[date]) {
-        workoutsByDate[date] = [];
+      if (!exercisesByDate[date]) {
+        exercisesByDate[date] = [];
       }
-      workoutsByDate[date].push(workout);
+      // Loop through workout_exercises array
+      if (workout.workout_exercises && workout.workout_exercises.length > 0) {
+        workout.workout_exercises.forEach(exercise => {
+          exercisesByDate[date].push({
+            workout_id: workout.workout_id,
+            exercise_name: exercise.exercises?.name || 'Exercise',
+            sets: exercise.sets,
+            reps: exercise.reps,
+            weight: exercise.weight
+          });
+        });
+      }
     });
 
     const container = document.getElementById('workouts-list');
     if (!container) return;
 
-    if (userWorkouts.length === 0) {
+    const totalExercises = Object.values(exercisesByDate).reduce((sum, exercises) => sum + exercises.length, 0);
+    if (totalExercises === 0) {
       container.innerHTML = '<p style="text-align: center; color: var(--text-secondary); padding: 2rem;">No workouts yet. Create your first workout!</p>';
       return;
     }
 
     // Sort dates descending
-    const sortedDates = Object.keys(workoutsByDate).sort((a, b) => new Date(b) - new Date(a));
+    const sortedDates = Object.keys(exercisesByDate).sort((a, b) => new Date(b) - new Date(a));
 
     container.innerHTML = sortedDates.map(date => {
-      const workouts = workoutsByDate[date];
+      const exercises = exercisesByDate[date];
       return `
         <div class="workout-card">
           <div class="workout-header">
@@ -60,13 +76,13 @@ async function renderWorkouts() {
             <button class="btn-danger" onclick="deleteWorkoutsByDate('${date}')">Delete</button>
           </div>
           <div class="exercise-list">
-            ${workouts.map(workout => `
+            ${exercises.map(exercise => `
               <div class="exercise-item">
                 <div>
-                  <div class="exercise-name">${workout.exercise || 'Exercise'}</div>
-                  <div class="exercise-details">${workout.sets} sets × ${workout.reps} reps × ${workout.weight}kg</div>
+                  <div class="exercise-name">${exercise.exercise_name}</div>
+                  <div class="exercise-details">${exercise.sets} sets × ${exercise.reps} reps × ${exercise.weight}kg</div>
                 </div>
-                <button class="btn-danger" onclick="deleteWorkout(${workout.workout_id})">Delete</button>
+                <button class="btn-danger" onclick="deleteWorkout(${exercise.workout_id})">Delete</button>
               </div>
             `).join('')}
           </div>
@@ -84,9 +100,21 @@ async function renderWorkouts() {
 
 function showCreateWorkoutModal() {
   const date = new Date().toISOString().split('T')[0];
-  const exercisesHtml = exercises.map(ex => 
-    `<option value="${ex.name}">${ex.name}</option>`
-  ).join('');
+  
+  if (!exercises || exercises.length === 0) {
+    loadExercisesList().then(() => {
+      // Retry showing modal after exercises are loaded
+      showCreateWorkoutModal();
+    });
+    return;
+  }
+
+  // Map exercises to select options
+  const exercisesHtml = exercises.map(ex => {
+    const exerciseName = ex.name || ex.exercise_name || ex.exercise || 'Unknown';
+    const exerciseValue = ex.name || ex.exercise_name || ex.exercise || '';
+    return `<option value="${exerciseValue}">${exerciseName}</option>`;
+  }).join('');
 
   const modalContent = `
     <form id="create-workout-form">
@@ -143,9 +171,16 @@ window.addExerciseField = function() {
   const container = document.getElementById('exercises-container');
   if (!container) return;
 
-  const exercisesHtml = exercises.map(ex => 
-    `<option value="${ex.name}">${ex.name}</option>`
-  ).join('');
+  if (!exercises || exercises.length === 0) {
+    return;
+  }
+
+  // Map exercises to select options
+  const exercisesHtml = exercises.map(ex => {
+    const exerciseName = ex.name || ex.exercise_name || ex.exercise || 'Unknown';
+    const exerciseValue = ex.name || ex.exercise_name || ex.exercise || '';
+    return `<option value="${exerciseValue}">${exerciseName}</option>`;
+  }).join('');
 
   const newExercise = document.createElement('div');
   newExercise.className = 'exercise-form-item';

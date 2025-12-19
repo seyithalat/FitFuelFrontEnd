@@ -40,10 +40,11 @@ export function logout() {
 }
 
 // Initialize login/register forms
-document.addEventListener('DOMContentLoaded', () => {
+function initAuthForms() {
   // Login form
   const loginForm = document.getElementById('login-form');
-  if (loginForm) {
+  if (loginForm && !loginForm.dataset.listenerAttached) {
+    loginForm.dataset.listenerAttached = 'true';
     loginForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const email = document.getElementById('login-email')?.value;
@@ -65,7 +66,8 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Register form
   const registerForm = document.getElementById('register-form');
-  if (registerForm) {
+  if (registerForm && !registerForm.dataset.listenerAttached) {
+    registerForm.dataset.listenerAttached = 'true';
     registerForm.addEventListener('submit', async (e) => {
       e.preventDefault();
       const email = document.getElementById('register-email')?.value;
@@ -86,15 +88,31 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   // Show register/login links
-  document.getElementById('show-register')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    document.getElementById('login-page')?.classList.add('hidden');
-    document.getElementById('register-page')?.classList.remove('hidden');
-  });
+  const showRegister = document.getElementById('show-register');
+  if (showRegister && !showRegister.dataset.listenerAttached) {
+    showRegister.dataset.listenerAttached = 'true';
+    showRegister.addEventListener('click', (e) => {
+      e.preventDefault();
+      document.getElementById('login-page')?.classList.add('hidden');
+      document.getElementById('register-page')?.classList.remove('hidden');
+    });
+  }
 
-  document.getElementById('show-login')?.addEventListener('click', (e) => {
-    e.preventDefault();
-    document.getElementById('register-page')?.classList.add('hidden');
-    document.getElementById('login-page')?.classList.remove('hidden');
-  });
-});
+  const showLogin = document.getElementById('show-login');
+  if (showLogin && !showLogin.dataset.listenerAttached) {
+    showLogin.dataset.listenerAttached = 'true';
+    showLogin.addEventListener('click', (e) => {
+      e.preventDefault();
+      document.getElementById('register-page')?.classList.add('hidden');
+      document.getElementById('login-page')?.classList.remove('hidden');
+    });
+  }
+}
+
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', initAuthForms);
+} else {
+  // DOM is already loaded
+  initAuthForms();
+}

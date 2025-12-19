@@ -1,95 +1,55 @@
 # FitFuel Frontend
 
-A Vue.js frontend application for the FitFuel fitness and nutrition tracking API.
+Frontend for my fitness tracking app. Built with vanilla JS and Vue (via CDN). Connects to a backend API for workouts, meals, and some AI features.
 
-## Project Structure
+## Structure
 
-```
-fitfuel-frontend/
-├── css/
-│   └── style.css          # Stylesheet
-├── js/
-│   ├── api.js            # API utility functions
-│   ├── users.js          # Authentication composable
-│   ├── workouts.js       # Workouts composable
-│   ├── meals.js          # Meals composable
-│   ├── preferences.js    # Preferences composable
-│   ├── ai.js             # AI features composable
-│   └── main.js           # (Not used - all in index.html)
-├── index.html            # Main HTML file with Vue app
-└── README.md            # This file
-```
+Pretty straightforward setup:
+- `index.html` - main page with all the HTML
+- `css/style.css` - all the styling
+- `js/` folder with modules:
+  - `api.js` - handles all API calls
+  - `users.js` - login/register stuff
+  - `workouts.js` - workout tracking
+  - `meals.js` - meal logging
+  - `preferences.js` - user settings (uses Vue composables)
+  - `ai.js` - workout plan and recipe generation
+  - `admin.js` - admin panel
+  - `dashboard.js`, `calendar.js`, `minigame.js` - other pages
+  - `app.js` - main app controller
+- `server.js` - simple Node server to run it locally
 
-## Features
+## What it does
 
-- **Authentication**: Login and Register
-- **Workouts**: Track exercises, sets, reps, and weight
-- **Meals**: Log meals with food items and nutritional info
-- **Preferences**: Set calorie targets, macros, liked exercises, and disliked foods
-- **AI Features**: 
-  - Generate workout plans
-  - Generate meal recipes
-  - Generate freestyle circuit workouts
+You can track workouts (exercises, sets, reps, weight), log meals with nutritional info, set preferences like calorie targets and macros. There's also some AI features that generate workout plans based on muscle groups and meal recipes. Oh and there's a wordle game integrated from the backend.
 
-## Setup
+Admin users get extra features to manage users, workouts, meals, and the exercise/food database.
 
-1. Make sure your FitFuel API backend is running on `http://localhost:3000`
+## Running it
 
-2. Open `index.html` in a modern web browser, or use a local server:
+First make sure the backend is running on port 3000.
 
-   **Using Python:**
-   ```bash
-   cd fitfuel-frontend
-   python -m http.server 8000
-   ```
-   Then open `http://localhost:8000` in your browser
+Then you can either:
+- Just open `index.html` in a browser (some features might not work due to CORS)
+- Use the Node server: `node server.js` then go to `http://localhost:8000`
+- Or use Python: `python -m http.server 8000`
+- Or VS Code Live Server extension
 
-   **Using Node.js (http-server):**
-   ```bash
-   npx http-server fitfuel-frontend -p 8000
-   ```
+I usually just use the Node server since it's already set up.
 
-   **Using VS Code Live Server:**
-   - Install the "Live Server" extension
-   - Right-click `index.html` and select "Open with Live Server"
+## How it works
 
-## Usage
+Uses ES6 modules, so everything is split into separate files. Authentication tokens are stored in localStorage. The app checks if you're logged in on load and shows the right page.
 
-1. **Register/Login**: Create an account or login with existing credentials
-2. **Dashboard**: View your workout and meal statistics
-3. **Workouts**: Add and manage your workout sessions
-4. **Meals**: Log meals by selecting foods and quantities
-5. **Preferences**: Set your fitness goals and preferences
-6. **AI Features**: Generate personalized workout plans and meal recipes
+Most of it is vanilla JS, but preferences.js uses Vue composables because I wanted to try that out. The rest is just regular JS with fetch calls to the API.
 
-## API Endpoints Used
+The workout plan generator categorizes exercises by muscle groups (chest, back, legs, etc.) and creates proper splits like chest+triceps, back+biceps, legs+shoulders. It reads the primary_muscle field from exercises in the database.
 
-- `POST /users/login` - Login
-- `POST /users` - Register
-- `GET /workouts` - Get all workouts
-- `POST /workouts` - Create workout
-- `DELETE /workouts/:id` - Delete workout
-- `GET /meals` - Get all meals
-- `POST /meals` - Create meal
-- `DELETE /meals/:id` - Delete meal
-- `GET /foods` - Get all foods
-- `GET /preferences/:userId` - Get preferences
-- `PUT /preferences/:userId` - Update preferences
-- `POST /ai/workout-plan` - Generate workout plan
-- `POST /ai/recipes` - Generate meal recipe
-- `POST /ai/freestyle` - Generate freestyle workout
+## Tech stuff
 
-## Technologies
-
-- Vue.js 3 (via CDN)
-- Vanilla JavaScript (ES6 modules)
-- Fetch API for HTTP requests
-- LocalStorage for token storage
-
-## Notes
-
-- Authentication tokens are stored in localStorage
-- The app uses Vue 3 Composition API
-- All API calls include authentication headers when logged in
-- CORS must be enabled on the backend for this to work
+- Vue 3 from CDN (only used in preferences)
+- Vanilla JavaScript with ES6 modules
+- Fetch API for backend calls
+- LocalStorage for auth tokens
+- Backend needs CORS enabled
 

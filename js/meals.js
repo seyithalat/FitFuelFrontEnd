@@ -41,6 +41,8 @@ async function renderMeals() {
 
     container.innerHTML = userMeals.map(meal => {
       const totals = calculateMealTotals(meal);
+      // Get meal items (backend might use meal_items or mealitems)
+      const mealItems = meal.meal_items || meal.mealitems || [];
       return `
         <div class="meal-card">
           <div class="workout-header">
@@ -48,14 +50,21 @@ async function renderMeals() {
             <button class="btn-danger" onclick="deleteMeal(${meal.meal_id})">Delete</button>
           </div>
           <div class="exercise-list">
-            ${meal.mealitems?.map(item => `
-              <div class="exercise-item">
-                <div>
-                  <div class="exercise-name">${item.foods?.name || 'Food'}</div>
-                  <div class="exercise-details">Quantity: ${item.quantity}x | ${(item.foods?.kcal * item.quantity).toFixed(0)} kcal</div>
+            ${mealItems.length > 0 ? mealItems.map(item => {
+              // Get food data (backend might use foods or food)
+              const food = item.foods || item.food || {};
+              const quantity = item.quantity || 0;
+              const kcalPer100g = food.kcal || 0;
+              const totalKcal = (kcalPer100g * quantity / 100).toFixed(0);
+              return `
+                <div class="exercise-item">
+                  <div>
+                    <div class="exercise-name">${food.name || 'Food'}</div>
+                    <div class="exercise-details">${quantity}g (${kcalPer100g} kcal per 100g) | Total: ${totalKcal} kcal</div>
+                  </div>
                 </div>
-              </div>
-            `).join('') || '<p>No items</p>'}
+              `;
+            }).join('') : '<p>No items</p>'}
           </div>
           <div class="meal-totals">
             <span>Total: ${totals.kcal.toFixed(0)} kcal</span>
@@ -76,17 +85,21 @@ async function renderMeals() {
 }
 
 function calculateMealTotals(meal) {
-  if (!meal.mealitems || meal.mealitems.length === 0) {
+  const mealItems = meal.meal_items || meal.mealitems || [];
+  if (mealItems.length === 0) {
     return { kcal: 0, protein: 0, carbs: 0, fat: 0 };
   }
 
-  return meal.mealitems.reduce((total, item) => {
-    const food = item.foods || {};
+  return mealItems.reduce((total, item) => {
+    const food = item.foods || item.food || {};
+    const quantity = item.quantity || 0;
+    // Nutritional values are per 100g
+    const multiplier = quantity / 100;
     return {
-      kcal: total.kcal + (food.kcal || 0) * (item.quantity || 0),
-      protein: total.protein + (food.protein || 0) * (item.quantity || 0),
-      carbs: total.carbs + (food.carbs || 0) * (item.quantity || 0),
-      fat: total.fat + (food.fat || 0) * (item.quantity || 0)
+      kcal: total.kcal + (food.kcal || 0) * multiplier,
+      protein: total.protein + (food.protein || 0) * multiplier,
+      carbs: total.carbs + (food.carbs || 0) * multiplier,
+      fat: total.fat + (food.fat || 0) * multiplier
     };
   }, { kcal: 0, protein: 0, carbs: 0, fat: 0 });
 }
@@ -94,7 +107,7 @@ function calculateMealTotals(meal) {
 function showCreateMealModal() {
   const date = new Date().toISOString().split('T')[0];
   const foodsHtml = foods.map(food => 
-    `<option value="${food.food_id}">${food.name} (${food.kcal} kcal)</option>`
+    `<option value="${food.food_id}">${food.name} (${food.kcal} kcal per 100g)</option>`
   ).join('');
 
   const modalContent = `
@@ -114,8 +127,8 @@ function showCreateMealModal() {
               </select>
             </div>
             <div class="form-group">
-              <label>Quantity</label>
-              <input type="number" id="quantity-0" min="0.1" step="0.1" value="1" required>
+              <label>Quantity (grams)</label>
+              <input type="number" id="quantity-0" min="0.1" step="0.1" value="100" required>
             </div>
             <div class="form-group" style="display: flex; align-items: flex-end;">
               <button type="button" class="btn-danger" onclick="this.closest('.exercise-form-item').remove()">Remove</button>
@@ -146,7 +159,7 @@ window.addFoodField = function() {
   if (!container) return;
 
   const foodsHtml = foods.map(food => 
-    `<option value="${food.food_id}">${food.name} (${food.kcal} kcal)</option>`
+    `<option value="${food.food_id}">${food.name} (${food.kcal} kcal per 100g)</option>`
   ).join('');
 
   const newFood = document.createElement('div');
@@ -161,8 +174,8 @@ window.addFoodField = function() {
         </select>
       </div>
       <div class="form-group">
-        <label>Quantity</label>
-        <input type="number" id="quantity-${window.foodCounter}" min="0.1" step="0.1" value="1" required>
+        <label>Quantity (grams)</label>
+        <input type="number" id="quantity-${window.foodCounter}" min="0.1" step="0.1" value="100" required>
       </div>
       <div class="form-group" style="display: flex; align-items: flex-end;">
         <button type="button" class="btn-danger" onclick="this.closest('.exercise-form-item').remove()">Remove</button>

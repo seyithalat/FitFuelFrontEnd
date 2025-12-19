@@ -19,8 +19,11 @@ const mimeTypes = {
 const server = http.createServer((req, res) => {
   console.log(`${req.method} ${req.url}`);
 
-  let filePath = '.' + req.url;
-  if (filePath === './') {
+  // Remove query string and hash from URL
+  const urlPath = req.url.split('?')[0].split('#')[0];
+  
+  let filePath = '.' + urlPath;
+  if (filePath === './' || filePath === '.') {
     filePath = './index.html';
   }
 
@@ -44,7 +47,7 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`\n🚀 FitFuel Frontend Server running at:`);
+  console.log(`\nFitFuel Frontend Server running at:`);
   console.log(`   http://localhost:${PORT}\n`);
   console.log('Press Ctrl+C to stop the server.\n');
 });

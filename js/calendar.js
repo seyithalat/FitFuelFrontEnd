@@ -101,11 +101,26 @@ window.showWorkoutsForDate = function(dateKey) {
       return;
     }
 
-    const workoutList = dateWorkouts.map(w => 
-      `• ${w.exercise}: ${w.sets} sets × ${w.reps} reps × ${w.weight}kg`
-    ).join('\n');
+    // Build list of exercises from workouts
+    const workoutList = [];
+    dateWorkouts.forEach(workout => {
+      if (workout.workout_exercises && workout.workout_exercises.length > 0) {
+        workout.workout_exercises.forEach(exercise => {
+          const exerciseName = exercise.exercises?.name || 'Exercise';
+          const sets = exercise.sets || 0;
+          const reps = exercise.reps || 0;
+          const weight = exercise.weight || 0;
+          workoutList.push(`• ${exerciseName}: ${sets} sets × ${reps} reps × ${weight}kg`);
+        });
+      }
+    });
 
-    alert(`Workouts on ${new Date(dateKey).toLocaleDateString()}:\n\n${workoutList}`);
+    if (workoutList.length === 0) {
+      alert('No workouts on this date');
+      return;
+    }
+
+    alert(`Workouts on ${new Date(dateKey).toLocaleDateString()}:\n\n${workoutList.join('\n')}`);
   }).catch(error => {
     console.error('Error loading workouts:', error);
     alert('Error loading workouts');

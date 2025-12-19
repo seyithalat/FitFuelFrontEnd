@@ -1,5 +1,6 @@
 // Preferences module
 import { api, getCurrentUser } from './api.js';
+import { logout } from './users.js';
 
 const { ref } = Vue;
 
@@ -153,6 +154,16 @@ function renderPreferences(prefsModule) {
       <div id="preferences-error" class="error-message"></div>
       <button type="submit" class="btn-primary">Save Preferences</button>
     </form>
+
+    <div class="workout-card" style="margin-top: 2rem; border: 2px solid var(--error);">
+      <h3 style="color: var(--error); margin-bottom: 1rem;">Danger Zone</h3>
+      <p style="margin-bottom: 1rem; color: var(--text-secondary);">
+        Permanently delete your account. This action cannot be undone.
+      </p>
+      <button type="button" class="btn-danger" onclick="deleteOwnAccount()">
+        Delete My Account
+      </button>
+    </div>
   `;
 
   // Store prefsModule for use in handlers
@@ -239,3 +250,22 @@ async function handleSavePreferences(e) {
     }
   }
 }
+
+window.deleteOwnAccount = async function() {
+  if (!confirm('Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently deleted.')) {
+    return;
+  }
+
+  if (!confirm('This is your last chance. Are you absolutely sure?')) {
+    return;
+  }
+
+  try {
+    await api.deleteOwnAccount();
+    alert('Your account has been deleted. You will be logged out.');
+    logout();
+  } catch (error) {
+    console.error('Error deleting account:', error);
+    alert('Failed to delete account: ' + (error.message || 'Unknown error'));
+  }
+};

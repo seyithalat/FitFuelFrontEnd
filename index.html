@@ -89,6 +89,14 @@
           <span class="nav-icon">🤖</span>
           <span>AI Tools</span>
         </a>
+        <a href="#" data-page="minigame" class="nav-item">
+          <span class="nav-icon">🎮</span>
+          <span>Minigame</span>
+        </a>
+        <a href="#" data-page="admin" class="nav-item" id="admin-nav-item" style="display: none;">
+          <span class="nav-icon">👑</span>
+          <span>Admin</span>
+        </a>
       </nav>
       <div class="sidebar-footer">
         <button id="logout-btn" class="btn-logout">
@@ -190,6 +198,23 @@
         </div>
         <div id="ai-content" class="ai-content"></div>
       </div>
+
+      <!-- Minigame Page -->
+      <div id="minigame-page" class="page-content hidden">
+        <div class="page-header">
+          <h2>Play GYMLE</h2>
+          <p class="page-subtitle">Guess fitness and nutrition words!</p>
+        </div>
+        <div id="minigame-content" class="minigame-content"></div>
+      </div>
+
+      <!-- Admin Page -->
+      <div id="admin-page" class="page-content hidden">
+        <div class="page-header">
+          <h2>Admin Dashboard</h2>
+        </div>
+        <div id="admin-content" class="admin-content"></div>
+      </div>
     </main>
   </div>
 
@@ -213,6 +238,8 @@
   <script type="module" src="js/preferences.js"></script>
   <script type="module" src="js/ai.js"></script>
   <script type="module" src="js/calendar.js"></script>
+  <script type="module" src="js/minigame.js"></script>
+  <script type="module" src="js/admin.js"></script>
   <script type="module" src="js/app.js"></script>
 </body>
 </html>

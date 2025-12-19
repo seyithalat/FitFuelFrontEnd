@@ -1,5 +1,5 @@
 // API utility functions for FitFuel
-const API_BASE_URL = 'http://localhost:3000';
+export const API_BASE_URL = 'http://localhost:3000';
 
 // Get auth token from localStorage
 function getToken() {
@@ -123,6 +123,11 @@ const api = {
     return apiRequest('/foods');
   },
 
+  // Exercises
+  getExercises() {
+    return apiRequest('/exercises');
+  },
+
   // Preferences
   getPreferences(userId) {
     return apiRequest(`/preferences/${userId}`);
@@ -155,8 +160,108 @@ const api = {
       method: 'POST',
       body: JSON.stringify(data)
     });
+  },
+
+  // Admin - Users
+  getAdminUsers(search = '') {
+    const query = search ? `?search=${encodeURIComponent(search)}` : '';
+    return apiRequest(`/admin/users${query}`);
+  },
+
+  updateAdminUser(userId, userData) {
+    return apiRequest(`/admin/users/${userId}`, {
+      method: 'PUT',
+      body: JSON.stringify(userData)
+    });
+  },
+
+  deleteAdminUser(userId) {
+    return apiRequest(`/admin/users/${userId}`, {
+      method: 'DELETE'
+    });
+  },
+
+  // Admin - Stats
+  getAdminStats() {
+    return apiRequest('/admin/stats');
+  },
+
+  // Admin - Workouts
+  getAdminWorkouts() {
+    return apiRequest('/admin/workouts');
+  },
+
+  deleteAdminWorkout(workoutId) {
+    return apiRequest(`/admin/workouts/${workoutId}`, {
+      method: 'DELETE'
+    });
+  },
+
+  // Admin - Meals
+  getAdminMeals() {
+    return apiRequest('/admin/meals');
+  },
+
+  deleteAdminMeal(mealId) {
+    return apiRequest(`/admin/meals/${mealId}`, {
+      method: 'DELETE'
+    });
+  },
+
+  // Admin - Exercises
+  createAdminExercise(exercise) {
+    return apiRequest('/admin/exercises', {
+      method: 'POST',
+      body: JSON.stringify(exercise)
+    });
+  },
+
+  updateAdminExercise(exerciseId, exercise) {
+    return apiRequest(`/admin/exercises/${exerciseId}`, {
+      method: 'PUT',
+      body: JSON.stringify(exercise)
+    });
+  },
+
+  deleteAdminExercise(exerciseId) {
+    return apiRequest(`/admin/exercises/${exerciseId}`, {
+      method: 'DELETE'
+    });
+  },
+
+  // Admin - Foods
+  createAdminFood(food) {
+    return apiRequest('/admin/foods', {
+      method: 'POST',
+      body: JSON.stringify(food)
+    });
+  },
+
+  updateAdminFood(foodId, food) {
+    return apiRequest(`/admin/foods/${foodId}`, {
+      method: 'PUT',
+      body: JSON.stringify(food)
+    });
+  },
+
+  deleteAdminFood(foodId) {
+    return apiRequest(`/admin/foods/${foodId}`, {
+      method: 'DELETE'
+    });
+  },
+
+  // User - Delete own account
+  deleteOwnAccount() {
+    return apiRequest('/users/me', {
+      method: 'DELETE'
+    });
   }
 };
+
+export function isAdmin() {
+  const user = getCurrentUser();
+  return user && user.is_admin === true;
+}
 
 // Export for ES6 modules
 export { api, getCurrentUser };

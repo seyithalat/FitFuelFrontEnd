@@ -6,6 +6,9 @@ import { loadMealsPage } from './meals.js';
 import { loadCalendarPage } from './calendar.js';
 import { loadPreferencesPage } from './preferences.js';
 import { loadAIPage } from './ai.js';
+import { loadMinigamePage } from './minigame.js';
+import { loadAdminPage } from './admin.js';
+import { isAdmin } from './api.js';
 
 // Theme Management
 function initTheme() {
@@ -25,7 +28,7 @@ function toggleTheme() {
 function updateThemeIcon(theme) {
   const icon = document.getElementById('theme-icon');
   if (icon) {
-    icon.textContent = theme === 'dark' ? '☀️' : '🌙';
+    icon.textContent = theme === 'dark' ? '🔆' : '🌙';
   }
 }
 
@@ -38,6 +41,7 @@ function initNavigation() {
       const page = item.getAttribute('data-page');
       if (page) {
         showPage(page);
+        updateAdminNavigation(); // Update admin nav visibility
       }
     });
   });
@@ -90,6 +94,12 @@ function showPage(pageName) {
       break;
     case 'ai':
       loadAIPage();
+      break;
+    case 'minigame':
+      loadMinigamePage();
+      break;
+    case 'admin':
+      loadAdminPage();
       break;
   }
 }
@@ -182,9 +192,22 @@ async function init() {
   const isAuthenticated = await checkAuth();
   if (isAuthenticated) {
     showApp();
+    updateAdminNavigation();
     showPage('dashboard');
   } else {
     showLoginPage();
+  }
+}
+
+// Show/hide admin navigation based on user role
+function updateAdminNavigation() {
+  const adminNavItem = document.querySelector('[data-page="admin"]');
+  if (adminNavItem) {
+    if (isAdmin()) {
+      adminNavItem.style.display = '';
+    } else {
+      adminNavItem.style.display = 'none';
+    }
   }
 }
 
@@ -193,6 +216,10 @@ function showApp() {
   document.getElementById('register-page')?.classList.add('hidden');
   document.getElementById('app')?.classList.remove('hidden');
 }
+
+// Make modal functions available globally to avoid circular dependencies
+window.showModal = showModal;
+window.closeModal = closeModal;
 
 function showLoginPage() {
   document.getElementById('app')?.classList.add('hidden');
