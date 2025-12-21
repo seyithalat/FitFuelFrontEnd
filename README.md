@@ -1,23 +1,28 @@
 # FitFuel Frontend
 
-Frontend for my fitness tracking app. Built with vanilla JS and Vue (via CDN). Connects to a backend API for workouts, meals, and some AI features.
+Frontend for my fitness tracking app. Built with Vue 3. Connects to a backend API for workouts, meals, and some AI features.
 
 ## Structure
 
-Pretty straightforward setup:
-- `index.html` - main page with all the HTML
-- `css/style.css` - all the styling
-- `js/` folder with modules:
-  - `api.js` - handles all API calls
-  - `users.js` - login/register stuff
-  - `workouts.js` - workout tracking
-  - `meals.js` - meal logging
-  - `preferences.js` - user settings (uses Vue composables)
-  - `ai.js` - workout plan and recipe generation
-  - `admin.js` - admin panel
-  - `dashboard.js`, `calendar.js`, `minigame.js` - other pages
-  - `app.js` - main app controller
-- `server.js` - simple Node server to run it locally
+Vue.js project structure:
+- `src/` - source code
+  - `main.js` - entry point
+  - `App.vue` - root component
+  - `components/` - Vue components
+    - `Login.vue`, `Register.vue` - authentication
+    - `Sidebar.vue` - navigation sidebar
+    - `Dashboard.vue`, `Workouts.vue`, `Meals.vue`, `Calendar.vue`, `Preferences.vue`, `AI.vue`, `Minigame.vue` - page components
+    - `Admin.vue` and `admin/` subcomponents - admin panel
+    - `Modal.vue` - modal component
+  - `services/` - service modules
+    - `api.js` - API client
+    - `aiService.js` - AI workout plan generation
+  - `assets/` - static assets
+    - `style.css` - global styles
+- `public/` - public static files
+  - `index.html` - HTML template
+- `package.json` - dependencies and scripts
+- `vue.config.js` - Vue CLI configuration
 
 ## What it does
 
@@ -29,27 +34,41 @@ Admin users get extra features to manage users, workouts, meals, and the exercis
 
 First make sure the backend is running on port 3000.
 
-Then you can either:
-- Just open `index.html` in a browser (some features might not work due to CORS)
-- Use the Node server: `node server.js` then go to `http://localhost:8000`
-- Or use Python: `python -m http.server 8000`
-- Or VS Code Live Server extension
+### Development
 
-I usually just use the Node server since it's already set up.
+1. Install dependencies:
+```bash
+npm install
+```
+
+2. Run the development server:
+```bash
+npm run serve
+```
+
+The app will be available at `http://localhost:8000`
+
+### Production
+
+Build for production:
+```bash
+npm run build
+```
+
+The built files will be in the `dist/` directory.
 
 ## How it works
 
-Uses ES6 modules, so everything is split into separate files. Authentication tokens are stored in localStorage. The app checks if you're logged in on load and shows the right page.
+Built with Vue 3 using the Composition API. Authentication tokens are stored in localStorage. The app checks if you're logged in on load and shows the right page.
 
-Most of it is vanilla JS, but preferences.js uses Vue composables because I wanted to try that out. The rest is just regular JS with fetch calls to the API.
+All components are Vue Single File Components (.vue files). The app uses Vue's reactive system for state management.
 
 The workout plan generator categorizes exercises by muscle groups (chest, back, legs, etc.) and creates proper splits like chest+triceps, back+biceps, legs+shoulders. It reads the primary_muscle field from exercises in the database.
 
 ## Tech stuff
 
-- Vue 3 from CDN (only used in preferences)
-- Vanilla JavaScript with ES6 modules
+- Vue 3 with Composition API
+- Vue CLI for build tooling
 - Fetch API for backend calls
 - LocalStorage for auth tokens
 - Backend needs CORS enabled
-

@@ -7,7 +7,7 @@ function getToken() {
 }
 
 // Get current user from token
-function getCurrentUser() {
+export function getCurrentUser() {
   const token = getToken();
   if (!token) return null;
   try {
@@ -43,7 +43,6 @@ async function apiRequest(endpoint, options = {}) {
 
     return response.json();
   } catch (error) {
-    // Handle network errors (CORS, connection refused, etc.)
     if (error.message === 'Failed to fetch' || error.name === 'TypeError') {
       throw new Error('Cannot connect to backend API. Make sure the backend server is running on http://localhost:3000');
     }
@@ -264,5 +263,4 @@ export function isAdmin() {
 }
 
 // Export for ES6 modules
-export { api, getCurrentUser };
-
+export { api };
