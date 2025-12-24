@@ -38,7 +38,12 @@ async function apiRequest(endpoint, options = {}) {
 
     if (!response.ok) {
       const error = await response.json().catch(() => ({ error: 'Request failed' }));
-      throw new Error(error.error || `HTTP ${response.status}`);
+      const errorMessage = error.error || error.message || `HTTP ${response.status}`;
+      // For 401/403, provide a clean "Invalid credentials" message
+      if (response.status === 401 || response.status === 403) {
+        throw new Error('Invalid credentials');
+      }
+      throw new Error(errorMessage);
     }
 
     return response.json();
@@ -259,7 +264,44 @@ const api = {
 
 export function isAdmin() {
   const user = getCurrentUser();
-  return user && user.is_admin === true;
+  if (!user) return false;
+  
+  // Strictly check for boolean true or number 1 (common in databases)
+  // Reject everything else to prevent false positives
+  const isAdminValue = user.is_admin;
+  
+  // Accept boolean true
+  if (isAdminValue === true) return true;
+  
+  // Accept number 1 (common in databases, but backend should convert to boolean)
+  if (isAdminValue === 1) return true;
+  
+  // Reject everything else (false, 0, null, undefined, "true", "false", etc.)
+  return false;
+}
+
+// Debug helper - expose to window for debugging
+if (typeof window !== 'undefined') {
+  window.debugFitFuel = {
+    getCurrentUser: getCurrentUser,
+    isAdmin: isAdmin,
+    getToken: () => {
+      const token = getToken();
+      if (!token) return null;
+      try {
+        const payload = JSON.parse(atob(token.split('.')[1]));
+        return {
+          token: token,
+          payload: payload,
+          isAdmin: payload.is_admin,
+          isAdminType: typeof payload.is_admin,
+          isAdminValue: payload.is_admin
+        };
+      } catch (e) {
+        return { error: e.message };
+      }
+    }
+  };
 }
 
 // Export for ES6 modules

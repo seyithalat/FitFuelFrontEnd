@@ -35,7 +35,7 @@
 </template>
 
 <script>
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, computed, watch } from 'vue'
 import { getCurrentUser, isAdmin, api } from './services/api'
 import Login from './components/Login.vue'
 import Register from './components/Register.vue'
@@ -71,11 +71,18 @@ export default {
     const currentView = ref('login')
     const currentPage = ref('dashboard')
     const modal = ref({ show: false, title: '', content: '' })
+    const tokenVersion = ref(0) // Track token changes for reactivity
 
-    const isAdminUser = computed(() => isAdmin())
+    // Make admin check reactive to token changes
+    const isAdminUser = computed(() => {
+      // Access tokenVersion to make this reactive (intentionally unused)
+      void tokenVersion.value
+      return isAdmin()
+    })
 
     const checkAuth = () => {
       const user = getCurrentUser()
+      tokenVersion.value++ // Trigger reactivity update
       isAuthenticated.value = !!user
       if (isAuthenticated.value) {
         currentView.value = 'app'
@@ -83,11 +90,22 @@ export default {
     }
 
     const handleLogin = async (email, password) => {
-      const data = await api.login(email, password)
-      localStorage.setItem('token', data.token)
-      isAuthenticated.value = true
-      currentView.value = 'app'
-      currentPage.value = 'dashboard'
+      try {
+        const data = await api.login(email, password)
+        localStorage.setItem('token', data.token)
+        tokenVersion.value++ // Trigger reactivity update
+        isAuthenticated.value = true
+        currentView.value = 'app'
+        currentPage.value = 'dashboard'
+      } catch (error) {
+        // Re-throw with a clean error message
+        const errorMessage = error.message || 'Login failed'
+        // Check if it's an invalid credentials error
+        if (errorMessage.toLowerCase().includes('invalid') || errorMessage.toLowerCase().includes('credentials') || errorMessage.includes('401')) {
+          throw new Error('Invalid credentials')
+        }
+        throw new Error(errorMessage)
+      }
     }
 
     const handleRegister = async (email, password) => {
@@ -98,11 +116,18 @@ export default {
 
     const handleLogout = () => {
       localStorage.removeItem('token')
+      tokenVersion.value++ // Trigger reactivity update
       isAuthenticated.value = false
       currentView.value = 'login'
     }
 
     const handleNavigate = (page) => {
+      // Prevent non-admin users from accessing admin page
+      if (page === 'admin' && !isAdmin()) {
+        console.warn('Access denied: Admin privileges required')
+        currentPage.value = 'dashboard'
+        return
+      }
       currentPage.value = page
     }
 
@@ -127,11 +152,24 @@ export default {
       document.documentElement.setAttribute('data-theme', savedTheme)
     }
 
+    // Watch for navigation to admin page and redirect if not admin
+    watch(currentPage, (newPage) => {
+      if (newPage === 'admin' && !isAdmin()) {
+        console.warn('Access denied: Admin privileges required. Redirecting to dashboard.')
+        currentPage.value = 'dashboard'
+      }
+    })
+
     onMounted(() => {
       initTheme()
       checkAuth()
       window.showModal = showModal
       window.closeModal = closeModal
+      
+      // Redirect away from admin page if user is not admin
+      if (currentPage.value === 'admin' && !isAdmin()) {
+        currentPage.value = 'dashboard'
+      }
     })
 
     return {
