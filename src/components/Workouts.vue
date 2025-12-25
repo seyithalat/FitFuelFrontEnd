@@ -18,7 +18,7 @@
           <div v-for="exercise in dateGroup.exercises" :key="exercise.workout_id" class="exercise-item">
             <div>
               <div class="exercise-name">{{ exercise.exercise_name }}</div>
-              <div class="exercise-details">{{ exercise.sets }} sets × {{ exercise.reps }} reps × {{ exercise.weight }}kg</div>
+              <div class="exercise-details">{{ exercise.sets }} sets × {{ exercise.reps }} reps {{ exercise.weight }}kg</div>
             </div>
             <button class="btn-danger" @click="deleteWorkout(exercise.workout_id)">Delete</button>
           </div>

@@ -120,8 +120,9 @@
 </template>
 
 <script>
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { api } from '../services/api'
+import { getCurrentUser } from '../services/api'
 import { generateStructuredWorkoutPlan, displayWorkoutPlan, displayFreestyle, displayRecipe } from '../services/aiService.js'
 
 export default {
@@ -135,6 +136,7 @@ export default {
     const workoutPlanForm = ref({ days: 3, goal: 'balanced' })
     const freestyleForm = ref({ duration: 30, intensity: 'medium' })
     const recipeForm = ref({ targetKcal: 600 })
+    const currentRecipe = ref(null) // Store the current recipe data
 
     const handleTool = (tool) => {
       error.value = ''
@@ -195,12 +197,91 @@ export default {
         const result = await api.generateRecipes({
           target_kcal: recipeForm.value.targetKcal
         })
+        currentRecipe.value = result // Store recipe data
         closeRecipeModal()
         results.value = displayRecipe(result)
       } catch (err) {
         error.value = err.message || 'Failed to generate recipe'
       }
     }
+
+    const addRecipeToMeals = async () => {
+      if (!currentRecipe.value || !currentRecipe.value.items) {
+        error.value = 'No recipe to add'
+        return
+      }
+
+      const user = getCurrentUser()
+      if (!user) {
+        error.value = 'Please log in to add meals'
+        return
+      }
+
+      error.value = ''
+      try {
+        // Transform recipe items to meal items format
+        const mealItems = currentRecipe.value.items.map(item => ({
+          food_id: item.food_id,
+          quantity: item.quantity
+        }))
+
+        // Create meal with today's date
+        await api.createMeal({
+          items: mealItems,
+          date: new Date().toISOString()
+        })
+
+        // Show success message
+        const successMsg = document.createElement('div')
+        successMsg.className = 'success-message'
+        successMsg.style.cssText = 'background: #4caf50; color: white; padding: 1rem; border-radius: 8px; margin-top: 1rem; text-align: center;'
+        successMsg.textContent = '✓ Meal added successfully!'
+        
+        const resultsDiv = document.getElementById('ai-results')
+        if (resultsDiv) {
+          resultsDiv.appendChild(successMsg)
+          setTimeout(() => {
+            successMsg.remove()
+          }, 3000)
+        }
+      } catch (err) {
+        error.value = err.message || 'Failed to add meal'
+      }
+    }
+
+    // Handle clicks on the "Add to Meals" button using event delegation
+    const handleResultsClick = (e) => {
+      if (e.target && e.target.classList.contains('add-to-meals-btn')) {
+        e.preventDefault()
+        addRecipeToMeals()
+      }
+    }
+
+    // Watch for results changes and re-attach event listener
+    watch(results, async () => {
+      await nextTick()
+      const resultsDiv = document.getElementById('ai-results')
+      if (resultsDiv) {
+        // Remove old listener if any
+        resultsDiv.removeEventListener('click', handleResultsClick)
+        // Add new listener
+        resultsDiv.addEventListener('click', handleResultsClick)
+      }
+    })
+
+    onMounted(() => {
+      const resultsDiv = document.getElementById('ai-results')
+      if (resultsDiv) {
+        resultsDiv.addEventListener('click', handleResultsClick)
+      }
+    })
+
+    onUnmounted(() => {
+      const resultsDiv = document.getElementById('ai-results')
+      if (resultsDiv) {
+        resultsDiv.removeEventListener('click', handleResultsClick)
+      }
+    })
 
     return {
       results,
@@ -217,7 +298,8 @@ export default {
       closeRecipeModal,
       generateWorkoutPlan,
       generateFreestyle,
-      generateRecipe
+      generateRecipe,
+      addRecipeToMeals
     }
   }
 }

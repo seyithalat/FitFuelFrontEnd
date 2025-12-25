@@ -1,8 +1,8 @@
-# FitFuel Frontend
+FitFuel Frontend
 
-Frontend for my fitness tracking app. Built with Vue 3. Connects to a backend API for workouts, meals, and some AI features.
+Frontend for my fitness tracking app. Built with Vue. Connects to a backend API for workouts, meals, and some AI features.
 
-## Structure
+Structure
 
 Vue.js project structure:
 - `src/` - source code
@@ -24,48 +24,20 @@ Vue.js project structure:
 - `package.json` - dependencies and scripts
 - `vue.config.js` - Vue CLI configuration
 
-## What it does
+What it does
 
-You can track workouts (exercises, sets, reps, weight), log meals with nutritional info, set preferences like calorie targets and macros. There's also some AI features that generate workout plans based on muscle groups and meal recipes. Oh and there's a wordle game integrated from the backend.
+You can track workouts (exercises, sets, reps, weight), log meals with nutritional info, and set preferences like calorie targets and macros. There are also AI features that generate workout plans based on muscle groups and meal recipes. There's also a wordle game integrated from the backend.
 
 Admin users get extra features to manage users, workouts, meals, and the exercise/food database.
 
-## Running it
-
-First make sure the backend is running on port 3000.
-
-### Development
-
-1. Install dependencies:
-```bash
-npm install
-```
-
-2. Run the development server:
-```bash
-npm run serve
-```
-
-The app will be available at `http://localhost:8000`
-
-### Production
-
-Build for production:
-```bash
-npm run build
-```
-
-The built files will be in the `dist/` directory.
-
-## How it works
+How it works
 
 Built with Vue 3 using the Composition API. Authentication tokens are stored in localStorage. The app checks if you're logged in on load and shows the right page.
 
 All components are Vue Single File Components (.vue files). The app uses Vue's reactive system for state management.
 
 The workout plan generator categorizes exercises by muscle groups (chest, back, legs, etc.) and creates proper splits like chest+triceps, back+biceps, legs+shoulders. It reads the primary_muscle field from exercises in the database.
-
-## Tech stuff
+Tech stuff
 
 - Vue 3 with Composition API
 - Vue CLI for build tooling

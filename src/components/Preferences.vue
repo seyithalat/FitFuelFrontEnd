@@ -11,19 +11,28 @@
           <div class="form-row">
             <div class="form-group">
               <label>Daily Calorie Target</label>
-              <input type="number" v-model.number="preferences.kcal_target" min="1000" max="10000" required>
+              <input type="number" v-model.number="preferences.kcal_target" min="1000" max="10000" required @input="onCaloriesChange">
+            </div>
+            <div class="form-group">
+              <label>Diet Type</label>
+              <select v-model="preferences.diet_type" @change="calculateMacros" required>
+                <option value="balanced">Balanced</option>
+                <option value="high_protein">High Protein</option>
+                <option value="low_carb">Low Carb</option>
+                <option value="custom">Custom</option>
+              </select>
             </div>
             <div class="form-group">
               <label>Protein (g)</label>
-              <input type="number" v-model.number="preferences.macros.protein" min="0" required>
+              <input type="number" v-model.number="preferences.macros.protein" min="0" required :readonly="preferences.diet_type !== 'custom'">
             </div>
             <div class="form-group">
               <label>Carbs (g)</label>
-              <input type="number" v-model.number="preferences.macros.carbs" min="0" required>
+              <input type="number" v-model.number="preferences.macros.carbs" min="0" required :readonly="preferences.diet_type !== 'custom'">
             </div>
             <div class="form-group">
               <label>Fat (g)</label>
-              <input type="number" v-model.number="preferences.macros.fat" min="0" required>
+              <input type="number" v-model.number="preferences.macros.fat" min="0" required :readonly="preferences.diet_type !== 'custom'">
             </div>
             <div class="form-group">
               <label>Workout Days/Week</label>
@@ -106,11 +115,52 @@ export default {
       macros: { protein: 120, carbs: 200, fat: 70 },
       liked_exercises: [],
       disliked_foods: [],
-      days_per_week: 3
+      days_per_week: 3,
+      diet_type: 'balanced'
     })
     const newExercise = ref('')
     const newDislikedFood = ref('')
     const saveMessage = ref('')
+
+    const calculateMacros = () => {
+      const kcal = preferences.value.kcal_target || 2000
+      const dietType = preferences.value.diet_type
+
+      // Calorie conversions: 4 cal/g for protein and carbs, 9 cal/g for fats
+      if (dietType === 'high_protein') {
+        // 45% protein, 30% carbs, 25% fats
+        const proteinCal = kcal * 0.45
+        const carbsCal = kcal * 0.30
+        const fatCal = kcal * 0.25
+        preferences.value.macros.protein = Math.round(proteinCal / 4)
+        preferences.value.macros.carbs = Math.round(carbsCal / 4)
+        preferences.value.macros.fat = Math.round(fatCal / 9)
+      } else if (dietType === 'low_carb') {
+        // 15% carbs, 35% protein, 50% fats
+        const carbsCal = kcal * 0.15
+        const proteinCal = kcal * 0.35
+        const fatCal = kcal * 0.50
+        preferences.value.macros.carbs = Math.round(carbsCal / 4)
+        preferences.value.macros.protein = Math.round(proteinCal / 4)
+        preferences.value.macros.fat = Math.round(fatCal / 9)
+      } else if (dietType === 'balanced') {
+        // Default balanced: 30% protein, 40% carbs, 30% fats
+        const proteinCal = kcal * 0.30
+        const carbsCal = kcal * 0.40
+        const fatCal = kcal * 0.30
+        preferences.value.macros.protein = Math.round(proteinCal / 4)
+        preferences.value.macros.carbs = Math.round(carbsCal / 4)
+        preferences.value.macros.fat = Math.round(fatCal / 9)
+      }
+      // If 'custom', don't calculate - user enters manually
+    }
+
+    const onCaloriesChange = () => {
+      // Recalculate macros if not in custom mode
+      if (preferences.value.diet_type !== 'custom') {
+        calculateMacros()
+      }
+    }
 
     const loadPreferences = async () => {
       loading.value = true
@@ -125,7 +175,12 @@ export default {
             macros: data.preferences.macros || { protein: 120, carbs: 200, fat: 70 },
             liked_exercises: data.preferences.liked_exercises || [],
             disliked_foods: data.preferences.disliked_foods || [],
-            days_per_week: data.preferences.days_per_week || 3
+            days_per_week: data.preferences.days_per_week || 3,
+            diet_type: data.preferences.diet_type || 'balanced'
+          }
+          // Calculate macros if not custom
+          if (preferences.value.diet_type !== 'custom') {
+            calculateMacros()
           }
         }
       } catch (err) {
@@ -207,8 +262,18 @@ export default {
       removeLikedExercise,
       addDislikedFood,
       removeDislikedFood,
-      deleteOwnAccount
+      deleteOwnAccount,
+      calculateMacros,
+      onCaloriesChange
     }
   }
 }
 </script>
+
+<style scoped>
+input[readonly] {
+  background-color: var(--bg-primary);
+  cursor: not-allowed;
+  opacity: 0.8;
+}
+</style>

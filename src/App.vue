@@ -71,18 +71,18 @@ export default {
     const currentView = ref('login')
     const currentPage = ref('dashboard')
     const modal = ref({ show: false, title: '', content: '' })
-    const tokenVersion = ref(0) // Track token changes for reactivity
+    // Track token changes to make admin check react
+    const tokenVersion = ref(0)
 
-    // Make admin check reactive to token changes
     const isAdminUser = computed(() => {
-      // Access tokenVersion to make this reactive (intentionally unused)
+      // Access tokenVersion to trigger reactivity when token changes
       void tokenVersion.value
       return isAdmin()
     })
 
     const checkAuth = () => {
       const user = getCurrentUser()
-      tokenVersion.value++ // Trigger reactivity update
+      tokenVersion.value++
       isAuthenticated.value = !!user
       if (isAuthenticated.value) {
         currentView.value = 'app'
@@ -93,14 +93,12 @@ export default {
       try {
         const data = await api.login(email, password)
         localStorage.setItem('token', data.token)
-        tokenVersion.value++ // Trigger reactivity update
+        tokenVersion.value++
         isAuthenticated.value = true
         currentView.value = 'app'
         currentPage.value = 'dashboard'
       } catch (error) {
-        // Re-throw with a clean error message
         const errorMessage = error.message || 'Login failed'
-        // Check if it's an invalid credentials error
         if (errorMessage.toLowerCase().includes('invalid') || errorMessage.toLowerCase().includes('credentials') || errorMessage.includes('401')) {
           throw new Error('Invalid credentials')
         }
@@ -110,19 +108,17 @@ export default {
 
     const handleRegister = async (email, password) => {
       await api.register(email, password)
-      // Auto-login after registration
       await handleLogin(email, password)
     }
 
     const handleLogout = () => {
       localStorage.removeItem('token')
-      tokenVersion.value++ // Trigger reactivity update
+      tokenVersion.value++
       isAuthenticated.value = false
       currentView.value = 'login'
     }
 
     const handleNavigate = (page) => {
-      // Prevent non-admin users from accessing admin page
       if (page === 'admin' && !isAdmin()) {
         console.warn('Access denied: Admin privileges required')
         currentPage.value = 'dashboard'
@@ -146,13 +142,11 @@ export default {
       modal.value = { show: false, title: '', content: '' }
     }
 
-    // Initialize theme
     const initTheme = () => {
       const savedTheme = localStorage.getItem('theme') || 'light'
       document.documentElement.setAttribute('data-theme', savedTheme)
     }
 
-    // Watch for navigation to admin page and redirect if not admin
     watch(currentPage, (newPage) => {
       if (newPage === 'admin' && !isAdmin()) {
         console.warn('Access denied: Admin privileges required. Redirecting to dashboard.')
@@ -166,7 +160,6 @@ export default {
       window.showModal = showModal
       window.closeModal = closeModal
       
-      // Redirect away from admin page if user is not admin
       if (currentPage.value === 'admin' && !isAdmin()) {
         currentPage.value = 'dashboard'
       }

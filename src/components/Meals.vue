@@ -9,27 +9,60 @@
       No meals logged yet. Log your first meal!
     </div>
     <div v-else class="meals-list">
-      <div v-for="meal in meals" :key="meal.meal_id" class="meal-card">
+      <div v-for="dayGroup in groupedMealsByDate" :key="dayGroup.date" class="meal-card day-column">
         <div class="workout-header">
-          <div class="workout-date">{{ formatDate(meal.date) }}</div>
-          <button class="btn-danger" @click="deleteMeal(meal.meal_id)">Delete</button>
+          <div class="workout-date">{{ formatDate(dayGroup.date) }}</div>
+          <div class="header-actions">
+            <button 
+              class="expand-btn" 
+              @click="toggleExpand(dayGroup.dateKey)"
+              :class="{ 'expanded': expandedDays[dayGroup.dateKey] }"
+              :title="expandedDays[dayGroup.dateKey] ? 'Collapse' : 'Expand'"
+            >
+              <span class="arrow-icon">{{ expandedDays[dayGroup.dateKey] ? '▼' : '▲' }}</span>
+            </button>
+            <button 
+              class="btn-danger" 
+              @click="deleteDayMeals(dayGroup.meals)"
+            >
+              Delete
+            </button>
+          </div>
         </div>
-        <div class="exercise-list">
-          <div v-for="item in meal.meal_items || meal.mealitems || []" :key="item.meal_item_id || item.id" class="exercise-item">
-            <div>
-              <div class="exercise-name">{{ (item.foods || item.food || {}).name || 'Food' }}</div>
-              <div class="exercise-details">
-                {{ item.quantity }}g ({{ (item.foods || item.food || {}).kcal || 0 }} kcal per 100g) | 
-                Total: {{ calculateItemKcal(item) }} kcal
+        <div class="day-totals">
+          <span class="total-calories">{{ calculateDayTotals(dayGroup).kcal.toFixed(0) }} kcal</span>
+          <span class="total-macro">P: {{ calculateDayTotals(dayGroup).protein.toFixed(1) }}g</span>
+          <span class="total-macro">C: {{ calculateDayTotals(dayGroup).carbs.toFixed(1) }}g</span>
+          <span class="total-macro">F: {{ calculateDayTotals(dayGroup).fat.toFixed(1) }}g</span>
+        </div>
+        <div v-if="expandedDays[dayGroup.dateKey]" class="food-items-expanded">
+          <div 
+            v-for="meal in dayGroup.meals" 
+            :key="meal.meal_id"
+            class="meal-group"
+          >
+            <div 
+              v-for="item in meal.meal_items || meal.mealitems || []" 
+              :key="item.meal_item_id || item.id" 
+              class="food-item"
+            >
+              <div class="food-name">
+                {{ item.quantity }}g of {{ (item.foods || item.food || {}).name || 'Food' }}
+              </div>
+              <div class="food-item-right">
+                <div class="food-macros">
+                  {{ formatItemMacros(item) }}
+                </div>
+                <button 
+                  class="btn-danger btn-small" 
+                  @click="deleteMealItem(meal.meal_id, item.meal_item_id || item.id, meal)"
+                  title="Delete this food item"
+                >
+                  Delete
+                </button>
               </div>
             </div>
           </div>
-        </div>
-        <div class="meal-totals">
-          <span>Total: {{ calculateTotals(meal).kcal.toFixed(0) }} kcal</span>
-          <span>Protein: {{ calculateTotals(meal).protein.toFixed(1) }}g</span>
-          <span>Carbs: {{ calculateTotals(meal).carbs.toFixed(1) }}g</span>
-          <span>Fat: {{ calculateTotals(meal).fat.toFixed(1) }}g</span>
         </div>
       </div>
     </div>
@@ -83,7 +116,7 @@
 </template>
 
 <script>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { api, getCurrentUser } from '../services/api'
 
 export default {
@@ -94,6 +127,7 @@ export default {
     const foods = ref([])
     const showModal = ref(false)
     const error = ref('')
+    const expandedDays = ref({})
     const newMeal = ref({
       date: new Date().toISOString().split('T')[0],
       items: [{ food_id: null, quantity: 100 }]
@@ -132,6 +166,60 @@ export default {
         month: 'long', 
         day: 'numeric' 
       })
+    }
+
+    const groupedMealsByDate = computed(() => {
+      const grouped = {}
+      meals.value.forEach(meal => {
+        const dateKey = meal.date ? new Date(meal.date).toISOString().split('T')[0] : 'no-date'
+        if (!grouped[dateKey]) {
+          grouped[dateKey] = {
+            date: meal.date || dateKey,
+            dateKey: dateKey,
+            meals: []
+          }
+        }
+        grouped[dateKey].meals.push(meal)
+      })
+      return Object.values(grouped).sort((a, b) => new Date(b.date) - new Date(a.date))
+    })
+
+    const toggleExpand = (dateKey) => {
+      expandedDays.value[dateKey] = !expandedDays.value[dateKey]
+    }
+
+    const calculateDayTotals = (dayGroup) => {
+      return dayGroup.meals.reduce((dayTotal, meal) => {
+        const mealTotal = calculateTotals(meal)
+        return {
+          kcal: dayTotal.kcal + mealTotal.kcal,
+          protein: dayTotal.protein + mealTotal.protein,
+          carbs: dayTotal.carbs + mealTotal.carbs,
+          fat: dayTotal.fat + mealTotal.fat
+        }
+      }, { kcal: 0, protein: 0, carbs: 0, fat: 0 })
+    }
+
+    const formatItemMacros = (item) => {
+      const food = item.foods || item.food || {}
+      const quantity = item.quantity || 0
+      const multiplier = quantity / 100
+      const cal = Math.round((food.kcal || 0) * multiplier)
+      const protein = ((food.protein || 0) * multiplier).toFixed(1)
+      const carbs = ((food.carbs || 0) * multiplier).toFixed(1)
+      const fat = ((food.fat || 0) * multiplier).toFixed(1)
+      return `${cal} kcal| ${protein}P/${carbs}C/${fat}F`
+    }
+
+    const deleteDayMeals = async (dayMeals) => {
+      if (!confirm(`Delete all meals for this day?`)) return
+      try {
+        const deletePromises = dayMeals.map(meal => api.deleteMeal(meal.meal_id))
+        await Promise.all(deletePromises)
+        await loadMeals()
+      } catch (err) {
+        alert('Failed to delete meals')
+      }
     }
 
     const calculateItemKcal = (item) => {
@@ -216,6 +304,21 @@ export default {
       }
     }
 
+    const deleteMealItem = async (mealId, itemId, meal) => {
+      const food = (meal.meal_items || meal.mealitems || []).find(item => 
+        (item.meal_item_id || item.id) === itemId
+      )
+      const foodName = (food?.foods || food?.food || {}).name || 'this food item'
+      if (!confirm(`Delete ${foodName} from this meal?`)) return
+      
+      try {
+        await api.deleteMealItem(mealId, itemId)
+        await loadMeals()
+      } catch (err) {
+        alert('Failed to delete food item')
+      }
+    }
+
     onMounted(async () => {
       await loadFoods()
       await loadMeals()
@@ -228,16 +331,137 @@ export default {
       showModal,
       error,
       newMeal,
+      expandedDays,
+      groupedMealsByDate,
       formatDate,
       calculateItemKcal,
       calculateTotals,
+      calculateDayTotals,
+      formatItemMacros,
+      toggleExpand,
+      deleteDayMeals,
       showCreateModal,
       closeModal,
       addFood,
       removeFood,
       handleCreateMeal,
-      deleteMeal
+      deleteMeal,
+      deleteMealItem
     }
   }
 }
 </script>
+
+<style scoped>
+.day-column {
+  width: 100%;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.expand-btn {
+  background: var(--bg-primary);
+  border: 2px solid var(--border-color);
+  cursor: pointer;
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-primary);
+  transition: all 0.2s;
+  min-width: 2.5rem;
+  min-height: 2.5rem;
+  border-radius: 6px;
+  font-size: 1rem;
+}
+
+.expand-btn:hover {
+  background: var(--accent-green-light);
+  border-color: var(--accent-green);
+  transform: scale(1.05);
+}
+
+.expand-btn.expanded .arrow-icon {
+  transform: rotate(0deg);
+}
+
+.arrow-icon {
+  font-size: 1.3rem;
+  font-weight: bold;
+  transition: transform 0.2s;
+  display: inline-block;
+  user-select: none;
+  line-height: 1;
+  color: var(--accent-green);
+}
+
+.day-totals {
+  display: flex;
+  gap: 1.5rem;
+  margin-top: 1rem;
+  padding: 1rem;
+  background: var(--bg-primary);
+  border-radius: 8px;
+  font-weight: 600;
+  flex-wrap: wrap;
+}
+
+.total-calories {
+  font-size: 1.2rem;
+  color: var(--accent-green);
+}
+
+.total-macro {
+  color: var(--text-primary);
+  font-size: 1rem;
+}
+
+.food-items-expanded {
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 2px solid var(--border-color);
+}
+
+.meal-group {
+  margin-bottom: 1rem;
+}
+
+.food-item {
+  padding: 0.75rem;
+  background: var(--bg-primary);
+  border-radius: 8px;
+  margin-bottom: 0.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+.food-name {
+  font-weight: 500;
+  color: var(--text-primary);
+  flex: 1;
+}
+
+.food-item-right {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.food-macros {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.btn-small {
+  padding: 0.4rem 0.8rem;
+  font-size: 0.85rem;
+}
+</style>

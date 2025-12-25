@@ -256,7 +256,7 @@ export function displayRecipe(recipe) {
           <div class="exercise-item">
             <div>
               <div class="exercise-name">${item.name}</div>
-              <div class="exercise-details">Quantity: ${item.quantity}x | ${(item.kcal * item.quantity).toFixed(0)} kcal</div>
+              <div class="exercise-details">Quantity: ${item.quantity}g | ${(item.kcal * item.quantity).toFixed(0)} kcal</div>
             </div>
           </div>
         `).join('')}
@@ -266,6 +266,11 @@ export function displayRecipe(recipe) {
         <span>Protein: ${recipe.totals?.protein.toFixed(1)}g</span>
         <span>Carbs: ${recipe.totals?.carbs.toFixed(1)}g</span>
         <span>Fat: ${recipe.totals?.fat.toFixed(1)}g</span>
+      </div>
+      <div style="margin-top: 1.5rem; text-align: center;">
+        <button class="add-to-meals-btn btn-primary" style="padding: 0.75rem 2rem; font-size: 1rem;">
+          ➕ Add to My Meals
+        </button>
       </div>
     </div>
   `

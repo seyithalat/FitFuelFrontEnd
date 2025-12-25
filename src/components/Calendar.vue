@@ -18,7 +18,7 @@
         >
           <div>{{ day }}</div>
           <div v-if="hasWorkout(day)" style="font-size: 0.7rem; margin-top: 0.25rem;">
-            {{ getWorkoutCount(day) }} workout{{ getWorkoutCount(day) > 1 ? 's' : '' }}
+            {{ getWorkoutCount(day) }} exercise{{ getWorkoutCount(day) > 1 ? 's' : '' }}
           </div>
         </div>
       </div>
